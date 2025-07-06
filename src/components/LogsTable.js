@@ -49,7 +49,7 @@ const LogsTable = () => {
     useEffect(() => {
         try {
             // 直接将地址硬编码到代码中
-            const urls = {"默认站点": "https://kiki205-yuki.hf.space/"};
+            const urls = {"默认站点": "https://kiki205-yuki.hf.space"};
             
             setBaseUrls(urls);
             const firstKey = Object.keys(urls)[0];
