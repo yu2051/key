@@ -48,22 +48,20 @@ const LogsTable = () => {
 
     useEffect(() => {
         try {
-            const urlEnv = process.env.REACT_APP_BASE_URL;
-            if (!urlEnv) {
-                Toast.error("环境变量 REACT_APP_BASE_URL 未设置，请在HF Space的Secrets中配置");
-                return;
-            }
-            const urls = JSON.parse(urlEnv);
+            // 直接将地址硬编码到代码中
+            const urls = {"默认站点": "https://kiki205-yuki.hf.space/"};
+            
             setBaseUrls(urls);
             const firstKey = Object.keys(urls)[0];
             if (firstKey) {
                 setActiveTabKey(firstKey);
                 setBaseUrl(urls[firstKey]);
             } else {
-                Toast.error("REACT_APP_BASE_URL中没有配置任何地址");
+                Toast.error("代码中没有配置任何地址");
             }
         } catch (e) {
-            Toast.error("环境变量 REACT_APP_BASE_URL 格式不正确，必须是有效的JSON");
+            Toast.error("初始化时发生未知错误，请检查代码");
+            console.error(e);
         }
     }, []);
 
