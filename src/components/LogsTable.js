@@ -84,92 +84,65 @@ const LogsTable = () => {
     };
 
     const fetchData = async () => {
-        console.log("1. '查询'按钮被点击，fetchData函数开始执行。");
         if (apikey === '') {
-            console.log("2. 检查失败：令牌为空。");
             Toast.warning('请先输入令牌，再进行查询');
             return;
         }
-        console.log("2. 检查通过：令牌不为空。");
         // 检查令牌格式
         if (!/^sk-[a-zA-Z0-9]{48}$/.test(apikey)) {
-            console.log("3. 检查失败：令牌格式非法！输入的令牌是: ", apikey);
             Toast.error('令牌格式非法！');
             return;
         }
-        console.log("3. 检查通过：令牌格式合法。");
-        console.log("4. 准备开始查询，设置加载状态为 true。");
         setLoading(true);
         let newTabData = { ...tabData[activeTabKey], balance: 0, usage: 0, accessdate: 0, logs: [], tokenValid: false };
-        console.log("5. 初始化 newTabData", newTabData);
 
         try {
-            // 注意：这里的环境变量是在构建时注入的，如果Hugging Face Secrets不生效，它们可能是undefined
-            const showBalance = process.env.REACT_APP_SHOW_BALANCE === "true";
-            console.log(`6. 检查是否需要显示余额 (REACT_APP_SHOW_BALANCE) -> ${showBalance}`);
-            
-            if (showBalance) {
-                console.log("7. 开始获取订阅信息，请求URL: ", `${baseUrl}/v1/dashboard/billing/subscription`);
-                const subscription = await API.get(`${baseUrl}/v1/dashboard/billing/subscription`, {
-                    headers: { Authorization: `Bearer ${apikey}` },
-                });
-                const subscriptionData = subscription.data;
-                console.log("8. 获取订阅信息成功: ", subscriptionData);
-                newTabData.balance = subscriptionData.hard_limit_usd;
-                newTabData.tokenValid = true;
+            // Hardcoded to true: Always fetch balance
+            const subscription = await API.get(`${baseUrl}/v1/dashboard/billing/subscription`, {
+                headers: { Authorization: `Bearer ${apikey}` },
+            });
+            const subscriptionData = subscription.data;
+            newTabData.balance = subscriptionData.hard_limit_usd;
+            newTabData.tokenValid = true;
 
-                let now = new Date();
-                let start = new Date(now.getTime() - 100 * 24 * 3600 * 1000);
-                let start_date = `${start.getFullYear()}-${start.getMonth() + 1}-${start.getDate()}`;
-                let end_date = `${now.getFullYear()}-${now.getMonth() + 1}-${now.getDate()}`;
-                console.log("9. 开始获取使用量信息，请求URL: ", `${baseUrl}/v1/dashboard/billing/usage?start_date=${start_date}&end_date=${end_date}`);
-                const res = await API.get(`${baseUrl}/v1/dashboard/billing/usage?start_date=${start_date}&end_date=${end_date}`, {
-                    headers: { Authorization: `Bearer ${apikey}` },
-                });
-                const data = res.data;
-                console.log("10. 获取使用量信息成功: ", data);
-                newTabData.usage = data.total_usage / 100;
-            }
+            let now = new Date();
+            let start = new Date(now.getTime() - 100 * 24 * 3600 * 1000);
+            let start_date = `${start.getFullYear()}-${start.getMonth() + 1}-${start.getDate()}`;
+            let end_date = `${now.getFullYear()}-${now.getMonth() + 1}-${now.getDate()}`;
+            const res = await API.get(`${baseUrl}/v1/dashboard/billing/usage?start_date=${start_date}&end_date=${end_date}`, {
+                headers: { Authorization: `Bearer ${apikey}` },
+            });
+            const data = res.data;
+            newTabData.usage = data.total_usage / 100;
         } catch (e) {
-            console.error("11. 获取余额/用量信息时出错: ", e);
+            console.error("获取余额/用量信息时出错: ", e);
             Toast.error("令牌已用尽或API请求失败");
             resetData(activeTabKey);
             setLoading(false);
             return;
         }
         try {
-            const showDetail = process.env.REACT_APP_SHOW_DETAIL === "true";
-            console.log(`12. 检查是否需要显示调用详情 (REACT_APP_SHOW_DETAIL) -> ${showDetail}`);
-
-            if (showDetail) {
-                console.log("13. 开始获取日志信息，请求URL: ", `${baseUrl}/api/log/token?key=${apikey}`);
-                const logRes = await API.get(`${baseUrl}/api/log/token?key=${apikey}`);
-                const { success, message, data: logData } = logRes.data;
-                console.log("14. 获取日志信息响应: ", logRes.data);
-                if (success) {
-                    console.log("15. 日志获取成功，处理数据。");
-                    newTabData.logs = logData.reverse();
-                    setActiveKeys(['1', '2']);
-                } else {
-                    console.log("16. 日志获取失败: ", message);
-                    Toast.error('查询调用详情失败：' + message);
-                }
+            // Hardcoded to true: Always fetch details
+            const logRes = await API.get(`${baseUrl}/api/log/token?key=${apikey}`);
+            const { success, message, data: logData } = logRes.data;
+            if (success) {
+                newTabData.logs = logData.reverse();
+                setActiveKeys(['1', '2']);
+            } else {
+                Toast.error('查询调用详情失败：' + message);
             }
         } catch (e) {
-            console.error("17. 获取调用详情时出错: ", e);
+            console.error("获取调用详情时出错: ", e);
             Toast.error("查询调用详情失败，请检查后端API或网络");
             resetData(activeTabKey);
             setLoading(false);
             return;
         }
-        console.log("18. 所有数据获取完毕，准备更新UI状态。");
         setTabData((prevData) => ({
             ...prevData,
             [activeTabKey]: newTabData,
         }));
-        console.log("19. UI状态更新完毕，设置加载状态为 false。");
         setLoading(false);
-        console.log("20. fetchData函数执行完毕。");
     };
 
     const copyText = async (text) => {
@@ -442,69 +415,65 @@ const LogsTable = () => {
             </Card>
             <Card style={{ marginTop: 24 }}>
                 <Collapse activeKey={activeKeys} onChange={(keys) => setActiveKeys(keys)}>
-                    {process.env.REACT_APP_SHOW_BALANCE === "true" && (
-                        <Panel
-                            header="令牌信息"
-                            itemKey="1"
-                            extra={
-                                <Button icon={<IconCopy />} theme='borderless' type='primary' onClick={(e) => copyTokenInfo(e)} disabled={!activeTabData.tokenValid}>
-                                    复制令牌信息
+                    <Panel
+                        header="令牌信息"
+                        itemKey="1"
+                        extra={
+                            <Button icon={<IconCopy />} theme='borderless' type='primary' onClick={(e) => copyTokenInfo(e)} disabled={!activeTabData.tokenValid}>
+                                复制令牌信息
+                            </Button>
+                        }
+                    >
+                        <Spin spinning={loading}>
+                            <div style={{ marginBottom: 16 }}>
+                                <Text type="secondary">
+                                    令牌总额：{activeTabData.balance === 100000000 ? "无限" : activeTabData.balance === "未知" || activeTabData.balance === undefined ? "未知" : `${activeTabData.balance.toFixed(3)}`}
+                                </Text>
+                                <br /><br />
+                                <Text type="secondary">
+                                    剩余额度：{activeTabData.balance === 100000000 ? "无限制" : activeTabData.balance === "未知" || activeTabData.usage === "未知" || activeTabData.balance === undefined || activeTabData.usage === undefined ? "未知" : `${(activeTabData.balance - activeTabData.usage).toFixed(3)}`}
+                                </Text>
+                                <br /><br />
+                                <Text type="secondary">
+                                    已用额度：{activeTabData.balance === 100000000 ? "不进行计算" : activeTabData.usage === "未知" || activeTabData.usage === undefined ? "未知" : `${activeTabData.usage.toFixed(3)}`}
+                                </Text>
+                                <br /><br />
+                                <Text type="secondary">
+                                    有效期至：{activeTabData.accessdate === 0 ? '永不过期' : activeTabData.accessdate === "未知" ? '未知' : renderTimestamp(activeTabData.accessdate)}
+                                </Text>
+                            </div>
+                        </Spin>
+                    </Panel>
+                    <Panel
+                        header="调用详情"
+                        itemKey="2"
+                        extra={
+                            <div style={{ display: 'flex', alignItems: 'center' }}>
+                                <Tag shape='circle' color='green' style={{ marginRight: 5 }}>计算汇率：$1 = 50 0000 tokens</Tag>
+                                <Button icon={<IconDownload />} theme='borderless' type='primary' onClick={(e) => exportCSV(e)} disabled={!activeTabData.tokenValid || activeTabData.logs.length === 0}>
+                                    导出为CSV文件
                                 </Button>
-                            }
-                        >
-                            <Spin spinning={loading}>
-                                <div style={{ marginBottom: 16 }}>
-                                    <Text type="secondary">
-                                        令牌总额：{activeTabData.balance === 100000000 ? "无限" : activeTabData.balance === "未知" || activeTabData.balance === undefined ? "未知" : `${activeTabData.balance.toFixed(3)}`}
-                                    </Text>
-                                    <br /><br />
-                                    <Text type="secondary">
-                                        剩余额度：{activeTabData.balance === 100000000 ? "无限制" : activeTabData.balance === "未知" || activeTabData.usage === "未知" || activeTabData.balance === undefined || activeTabData.usage === undefined ? "未知" : `${(activeTabData.balance - activeTabData.usage).toFixed(3)}`}
-                                    </Text>
-                                    <br /><br />
-                                    <Text type="secondary">
-                                        已用额度：{activeTabData.balance === 100000000 ? "不进行计算" : activeTabData.usage === "未知" || activeTabData.usage === undefined ? "未知" : `${activeTabData.usage.toFixed(3)}`}
-                                    </Text>
-                                    <br /><br />
-                                    <Text type="secondary">
-                                        有效期至：{activeTabData.accessdate === 0 ? '永不过期' : activeTabData.accessdate === "未知" ? '未知' : renderTimestamp(activeTabData.accessdate)}
-                                    </Text>
-                                </div>
-                            </Spin>
-                        </Panel>
-                    )}
-                    {process.env.REACT_APP_SHOW_DETAIL === "true" && (
-                        <Panel
-                            header="调用详情"
-                            itemKey="2"
-                            extra={
-                                <div style={{ display: 'flex', alignItems: 'center' }}>
-                                    <Tag shape='circle' color='green' style={{ marginRight: 5 }}>计算汇率：$1 = 50 0000 tokens</Tag>
-                                    <Button icon={<IconDownload />} theme='borderless' type='primary' onClick={(e) => exportCSV(e)} disabled={!activeTabData.tokenValid || activeTabData.logs.length === 0}>
-                                        导出为CSV文件
-                                    </Button>
-                                </div>
-                            }
-                        >
-                            <Spin spinning={loading}>
-                                <Table
-                                    columns={columns}
-                                    dataSource={activeTabData.logs}
-                                    pagination={{
-                                        pageSize: pageSize,
-                                        hideOnSinglePage: true,
-                                        showSizeChanger: true,
-                                        pageSizeOpts: [10, 20, 50, 100],
-                                        onPageSizeChange: (pageSize) => setPageSize(pageSize),
-                                        showTotal: (total) => `共 ${total} 条`,
-                                        showQuickJumper: true,
-                                        total: activeTabData.logs.length,
-                                        style: { marginTop: 12 },
-                                    }}
-                                />
-                            </Spin>
-                        </Panel>
-                    )}
+                            </div>
+                        }
+                    >
+                        <Spin spinning={loading}>
+                            <Table
+                                columns={columns}
+                                dataSource={activeTabData.logs}
+                                pagination={{
+                                    pageSize: pageSize,
+                                    hideOnSinglePage: true,
+                                    showSizeChanger: true,
+                                    pageSizeOpts: [10, 20, 50, 100],
+                                    onPageSizeChange: (pageSize) => setPageSize(pageSize),
+                                    showTotal: (total) => `共 ${total} 条`,
+                                    showQuickJumper: true,
+                                    total: activeTabData.logs.length,
+                                    style: { marginTop: 12 },
+                                }}
+                            />
+                        </Spin>
+                    </Panel>
                 </Collapse>
             </Card>
         </>
